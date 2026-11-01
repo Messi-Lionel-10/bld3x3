@@ -31,16 +31,22 @@
     <div class="menu-wrap">
       <button id="menuToggle" class="menu-button" aria-label="Open menu" aria-expanded="false">•••</button>
       <div id="menuPanel" class="menu-panel hidden">
-        <button id="newScrambleBtn" class="menu-action">↻ <span>New scramble</span></button>
         <button id="copyScrambleBtn" class="menu-action" disabled>▢ <span>Copy scramble</span></button>
-        <div class="menu-note">Fresh random-state 3×3 scramble</div>
+        <button id="importScramblesBtn" class="menu-action">⇧ <span>Import TNoodle set</span></button>
+        <button id="clearScramblesBtn" class="menu-action">⌫ <span>Clear imported set</span></button>
+        <div class="menu-note">Offline scrambles are loaded from a TNoodle-WCA 1.2.3 text set.</div>
       </div>
+      <input id="scrambleFileInput" type="file" accept=".txt,text/plain" hidden />
     </div>
 
     <section class="scramble-zone" aria-label="Current scramble">
       <div class="scramble-label">CURRENT SCRAMBLE</div>
       <div id="scrambleText" class="scramble-text" aria-live="polite">Generating scramble…</div>
-      <div id="scrambleStatus" class="scramble-status" aria-live="polite">Connecting to scramble generator…</div>
+      <div id="scrambleStatus" class="scramble-status" aria-live="polite">Import a TNoodle-WCA 1.2.3 scramble text set for offline practice.</div>
+      <div class="scramble-actions">
+        <button id="newScrambleBtn" class="primary-action">↻ <span>NEW SCRAMBLE</span></button>
+        <button id="copyScrambleHomeBtn" class="secondary-action" disabled>Copy</button>
+      </div>
     </section>
 
     <section class="main-action-zone">
@@ -62,10 +68,11 @@
 
     <aside class="status-card">
       <div class="status-card-title">TRAINING CHECKS</div>
-      <div class="status-metric"><span>Reference examples</span><strong id="integrityBadge" class="integrity-badge pending"><i class="status-dot"></i><span>Checking…</span></strong></div>
+      <div class="status-metric reference-metric"><span>Reference examples</span><strong id="integrityBadge" class="integrity-badge pending"><i class="status-dot"></i><span>Checking…</span></strong></div>
       <div class="status-divider"></div>
       <div class="status-metric"><span>Memo status</span><strong id="memoStatus">HIDDEN</strong></div>
       <div class="status-metric"><span>Orientation</span><strong>GF / WT</strong></div>
+      <div class="status-metric"><span>Offline set</span><strong id="offlineSetCount">0 loaded</strong></div>
     </aside>
   </main>
 
@@ -119,10 +126,6 @@
         menuPanel.classList.add('hidden');
         menuToggle.setAttribute('aria-expanded', 'false');
       }
-    });
-    document.getElementById('newScrambleBtn').addEventListener('click', () => {
-      menuPanel.classList.add('hidden');
-      menuToggle.setAttribute('aria-expanded', 'false');
     });
     const reveal = document.getElementById('revealBtn');
     reveal.addEventListener('click', () => {

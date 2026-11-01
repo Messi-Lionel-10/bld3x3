@@ -431,47 +431,90 @@ function computeBoth(scramble,drawNet=true) {
 
 let currentScramble="";
 let currentResults=null;
-let scrambleGenerator=null;
 let generating=false;
-async function loadGenerator() {
-  if (scrambleGenerator) return scrambleGenerator;
-  const mod=await import("https://cdn.cubing.net/v0/js/cubing/scramble");
-  scrambleGenerator=mod.randomScrambleForEvent;
-  if (typeof scrambleGenerator!=="function") throw new Error("The scramble generator did not load correctly.");
-  return scrambleGenerator;
+const OFFLINE_POOL_KEY="bldMemoTnoodlePoolV1";
+const OFFLINE_REMAINING_KEY="bldMemoTnoodleRemainingV1";
+const MOVE_TOKEN=/^[URFDLB](?:2|')?$/;
+function readOfflinePool(){
+  try { const value=JSON.parse(localStorage.getItem(OFFLINE_POOL_KEY)||"[]"); return Array.isArray(value)?value.filter(x=>typeof x==="string"):[]; }
+  catch { return []; }
 }
-async function generateNewScramble() {
-  if (generating) return;
+function updateOfflineCount(){
+  const pool=readOfflinePool();
+  const el=document.getElementById("offlineSetCount");
+  if(el) el.textContent=`${pool.length} loaded`;
+}
+function normalizeImportedLine(line){
+  return line.trim().replace(/^\s*(?:\d+[.)]|\d+\s*[-:]|\[[^\]]+\])\s*/,"").replace(/\s+/g," ");
+}
+function parseScrambleFile(text){
+  const rows=text.split(/\r?\n/).map(normalizeImportedLine).filter(Boolean);
+  const valid=[];
+  for(const row of rows){
+    const tokens=row.split(" ");
+    if(tokens.length<15 || !tokens.every(t=>MOVE_TOKEN.test(t))) continue;
+    try { scrambleToState(row); valid.push(row); } catch {}
+  }
+  return [...new Set(valid)];
+}
+function takeOfflineScramble(){
+  const pool=readOfflinePool();
+  if(!pool.length) throw new Error("No offline TNoodle set is loaded. Use the menu to import a text file with one TNoodle-WCA 1.2.3 3×3 scramble per line.");
+  let remaining;
+  try { remaining=JSON.parse(localStorage.getItem(OFFLINE_REMAINING_KEY)||"null"); } catch { remaining=null; }
+  if(!Array.isArray(remaining) || !remaining.length || remaining.some(x=>!pool.includes(x))) remaining=[...pool];
+  const index=Math.floor(Math.random()*remaining.length);
+  const [picked]=remaining.splice(index,1);
+  localStorage.setItem(OFFLINE_REMAINING_KEY,JSON.stringify(remaining));
+  return {scramble:picked,left:remaining.length,total:pool.length};
+}
+async function generateNewScramble(){
+  if(generating) return;
   generating=true;
   const newBtn=document.getElementById("newScrambleBtn");
   const status=document.getElementById("scrambleStatus");
-  newBtn.disabled=true; document.getElementById("revealBtn").disabled=true;
-  status.textContent="Generating a fresh random-state scramble…";
+  newBtn.disabled=true;
+  document.getElementById("revealBtn").disabled=true;
+  status.textContent="Selecting an unused scramble from your offline TNoodle set…";
   document.getElementById("memoPanel").classList.add("hidden");
-  try {
-    const generator=await loadGenerator();
-    const alg=await generator("333");
-    const scramble=alg.toString().trim();
-    if (!scramble) throw new Error("The scramble generator returned an empty sequence.");
+  try{
+    const picked=takeOfflineScramble();
+    const scramble=picked.scramble;
     currentResults=computeBoth(scramble);
     currentScramble=scramble;
     document.getElementById("scrambleText").textContent=scramble;
     document.getElementById("copyScrambleBtn").disabled=false;
+    document.getElementById("copyScrambleHomeBtn").disabled=false;
     document.getElementById("revealBtn").disabled=false;
-    status.textContent="New scramble ready. The 2D net is generated from the same scramble state.";
-  } catch (error) {
-    status.textContent=`Could not generate a new scramble: ${error.message}. Check your connection and try again.`;
-    if (!currentScramble) {
-      document.getElementById("scrambleText").textContent="Scramble unavailable";
-      document.getElementById("copyScrambleBtn").disabled=true;
-    } else {
-      document.getElementById("revealBtn").disabled=false;
-      document.getElementById("copyScrambleBtn").disabled=false;
-    }
-    console.error(error);
-  } finally {
-    generating=false; newBtn.disabled=false;
+    status.textContent=`Offline · TNoodle-WCA 1.2.3 practice set · ${picked.left} of ${picked.total} not yet used`;
+  }catch(error){
+    status.textContent=error.message;
+    document.getElementById("scrambleText").textContent="Load an offline TNoodle scramble set";
+    document.getElementById("copyScrambleBtn").disabled=true;
+    document.getElementById("copyScrambleHomeBtn").disabled=true;
+    document.getElementById("revealBtn").disabled=true;
+  }finally{
+    generating=false;
+    newBtn.disabled=false;
   }
+}
+function importScrambleFile(file){
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const scrambles=parseScrambleFile(String(reader.result||""));
+    if(!scrambles.length){
+      document.getElementById("scrambleStatus").textContent="No valid 3×3 move sequences found. Use a plain-text file with one TNoodle scramble per line.";
+      return;
+    }
+    localStorage.setItem(OFFLINE_POOL_KEY,JSON.stringify(scrambles));
+    localStorage.removeItem(OFFLINE_REMAINING_KEY);
+    updateOfflineCount();
+    document.getElementById("scrambleStatus").textContent=`Imported ${scrambles.length} scrambles. They are saved on this iPad and work offline.`;
+    generateNewScramble();
+  };
+  reader.onerror=()=>{document.getElementById("scrambleStatus").textContent="Could not read that text file.";};
+  reader.readAsText(file);
 }
 function showMemo() {
   if (!currentResults) return;
@@ -529,6 +572,18 @@ const copyText=async(text,statusEl,success)=>{
   catch { statusEl.textContent="Clipboard access is unavailable in this browser."; }
 };
 document.getElementById("newScrambleBtn").addEventListener("click",generateNewScramble);
+document.getElementById("importScramblesBtn").addEventListener("click",()=>document.getElementById("scrambleFileInput").click());
+document.getElementById("scrambleFileInput").addEventListener("change",event=>importScrambleFile(event.target.files?.[0]));
+document.getElementById("clearScramblesBtn").addEventListener("click",()=>{
+  localStorage.removeItem(OFFLINE_POOL_KEY); localStorage.removeItem(OFFLINE_REMAINING_KEY);
+  currentScramble=""; currentResults=null; updateOfflineCount();
+  document.getElementById("scrambleText").textContent="Load an offline TNoodle scramble set";
+  document.getElementById("scrambleStatus").textContent="Offline set cleared from this iPad.";
+  document.getElementById("copyScrambleBtn").disabled=true;
+  document.getElementById("copyScrambleHomeBtn").disabled=true;
+  document.getElementById("revealBtn").disabled=true;
+});
+document.getElementById("copyScrambleHomeBtn").addEventListener("click",()=>copyText(currentScramble,document.getElementById("scrambleStatus"),"Scramble copied."));
 document.getElementById("revealBtn").addEventListener("click",showMemo);
 document.getElementById("copyScrambleBtn").addEventListener("click",()=>copyText(currentScramble,document.getElementById("scrambleStatus"),"Scramble copied."));
 document.getElementById("copyMemoBtn").addEventListener("click",()=>copyText(currentMemoText(),document.getElementById("scrambleStatus"),"Paired memo copied."));
@@ -540,4 +595,5 @@ try {
 } catch (error) {
   setIntegrityBadge(false); console.error("Reference tests could not run:",error);
 }
+updateOfflineCount();
 generateNewScramble();
