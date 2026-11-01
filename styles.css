@@ -255,3 +255,107 @@ button { font:inherit; -webkit-tap-highlight-color:transparent; }
   .scramble-zone { top:19%; }
   .main-action-zone { top:44%; }
 }
+
+
+/* iPad home screen: keep all four primary zones within one viewport. */
+html, body { min-height:100%; }
+body { min-height:100dvh; }
+.stage {
+  height:100dvh;
+  min-height:0;
+  overflow:hidden;
+  isolation:isolate;
+}
+.session-card {
+  top:max(9px, env(safe-area-inset-top));
+  left:14px;
+  width:min(390px, calc(100vw - 76px));
+  padding:7px 9px 5px;
+}
+.session-top { min-height:30px; }
+.app-icon { width:28px; height:28px; }
+.session-name { font-size:16px; }
+.session-stats { margin-top:6px; gap:7px; }
+.mini-stat { height:40px; }
+.session-grabber { margin-top:5px; }
+.menu-wrap { top:max(9px, env(safe-area-inset-top)); right:14px; }
+.scramble-zone {
+  top:clamp(132px, 19vh, 205px);
+  width:min(920px, calc(100% - 40px));
+}
+.scramble-label { margin-bottom:5px; }
+.scramble-text { font-size:clamp(13px, 1.65vw, 19px); line-height:1.45; }
+.scramble-status { min-height:12px; margin-top:4px; font-size:9px; }
+.scramble-actions { margin-top:7px; }
+.primary-action, .secondary-action { min-height:34px; padding:0 14px; }
+.main-action-zone {
+  top:44%;
+  width:min(420px, calc(100% - 32px));
+}
+.mode-caption { margin-bottom:7px; font-size:9px; }
+.reveal-button { min-height:76px; width:min(330px,100%); padding:12px 40px 12px 16px; border-radius:14px; }
+.reveal-overline { margin-bottom:5px; font-size:9px; }
+.reveal-button strong { font-size:clamp(21px, 3vw, 28px); }
+.under-action { margin-top:6px; font-size:10px; }
+.net-card, .status-card { bottom:max(12px, env(safe-area-inset-bottom)); }
+.net-card {
+  left:14px;
+  width:clamp(190px, 25vw, 250px);
+  height:clamp(142px, 17vh, 174px);
+  padding:8px 10px 6px;
+}
+.net-card-heading { font-size:8px; }
+.cube-net { height:calc(100% - 15px); min-height:0; }
+.status-card {
+  right:14px;
+  width:clamp(205px, 24vw, 238px);
+  padding:9px 11px 8px;
+}
+.status-card-title { margin-bottom:5px; }
+.status-metric { margin:4px 0; font-size:10px; }
+.status-metric strong { font-size:10px; }
+.reference-metric { align-items:flex-start; flex-direction:column; gap:3px; }
+.integrity-badge { display:inline-flex; max-width:100%; white-space:normal; line-height:1.2; }
+.integrity-badge span:last-child { white-space:normal; }
+.status-divider { margin:6px 0; }
+@media (max-width:800px) {
+  .session-card { left:10px; width:min(320px, calc(100vw - 66px)); }
+  .session-name { font-size:14px; }
+  .event-select { font-size:13px; }
+  .menu-wrap { right:10px; }
+  .scramble-zone { top:clamp(126px, 18vh, 185px); width:calc(100% - 22px); }
+  .scramble-text { font-size:13px; line-height:1.4; }
+  .main-action-zone { top:43%; }
+  .net-card {
+    left:10px;
+    width:clamp(178px, 29vw, 218px);
+    height:clamp(132px, 15vh, 154px);
+    bottom:max(10px, env(safe-area-inset-bottom));
+    padding:7px 8px 5px;
+  }
+  .status-card {
+    right:10px;
+    width:clamp(190px, 28vw, 218px);
+    bottom:max(10px, env(safe-area-inset-bottom));
+    padding:8px 9px 7px;
+  }
+  .status-metric { font-size:9px; gap:5px; }
+  .status-metric strong { font-size:9px; }
+  .status-card-title { font-size:8px; }
+}
+@media (max-height:850px) {
+  .scramble-zone { top:clamp(118px, 17vh, 158px); }
+  .main-action-zone { top:42%; }
+  .net-card { height:clamp(124px, 17vh, 148px); }
+  .status-card { padding-top:7px; padding-bottom:6px; }
+  .status-metric { margin:3px 0; }
+  .status-divider { margin:4px 0; }
+}
+@media (max-height:700px) {
+  .session-stats { display:none; }
+  .session-card { width:min(300px, calc(100vw - 70px)); }
+  .scramble-zone { top:105px; }
+  .main-action-zone { top:43%; }
+  .net-card { height:116px; }
+  .cube-net { height:calc(100% - 14px); }
+}

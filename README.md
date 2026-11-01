@@ -1,37 +1,29 @@
-# BLD Memo Trainer — compact CubeTime-style iPad web app
+# BLD Memo Trainer — CubeTime-style iPad web app
 
-A static, installable website for practising 3×3 Old Pochmann memo. The interface is compacted for iPad: the New Scramble control is on the home screen, the 2D cube net is larger, memo option cards wrap into five columns on iPad (six on wider screens), the reference-check badge wraps safely, and parity is displayed as a prominent YES/NO pill.
+A static, installable website for practising 3×3 Old Pochmann memo. The home screen is compacted to fit the iPad viewport, with the scramble controls, reveal control, cube net and training checks all visible without scrolling.
 
-## Important: offline WCA/TNoodle scramble sets
+## Scramble generation
 
-The app no longer downloads a scramble library at runtime. Once the site has been opened online and its service worker has cached the app shell, it can run offline.
+The app generates a fresh 3×3 random-state scramble online using the browser module documented by cubing.js:
 
-To use genuine TNoodle-WCA 3×3 scramble sequences offline, import a plain-text file containing one 3×3 scramble per line. Prepare that file from the current official TNoodle-WCA release (currently 1.2.3 according to the WCA Scrambles page). The app stores the imported set in this browser on this iPad and chooses randomly without replacement until the set is exhausted; it then reshuffles the pool. No Wi-Fi is needed after import.
+`https://cdn.cubing.net/v0/js/cubing/scramble`
 
-**The app itself is not an official WCA scramble program.** TNoodle-WCA is the WCA's official scramble program; these imported sequences are for personal practice only, not for running a competition. Always check the WCA site for the current release before preparing a new set.
+The app therefore needs an internet connection for every new scramble. If generation fails, check the connection and tap **New Scramble** again. The scramble string is passed through the app's cube-state model, so the 2D net is calculated from the exact scramble shown.
 
-### Prepare an import file
-
-1. On a computer, download and run the official TNoodle-WCA program from the WCA Scrambles page: https://www.worldcubeassociation.org/regulations/scrambles/ . The WCA currently lists TNoodle-WCA 1.2.3.
-2. Generate a 3×3 practice set with plenty of attempts.
-3. Copy the 3×3 scramble sequences from the generated computer-display/scramble output into a plain-text file named `tnoodle-333.txt`, with **one complete scramble per line**. Keep standard move notation (for example `R U2 F' ...`). Remove headings, event labels and commentary.
-4. On the iPad, open BLD Memo Trainer, tap the ••• menu → **Import TNoodle set**, and select `tnoodle-333.txt` from Files.
-5. The app validates the move notation, stores the pool locally, and starts a scramble. The menu's **Clear imported set** action removes the local pool.
-
-The app tracks used scrambles within the imported set to avoid repeats until the set is exhausted. The pool is stored in this browser's local storage; importing it on another device is a separate step.
+**WCA status clarification:** cubing.js documents random-state scrambles for 3×3 and says its scrambles follow WCA Regulation 4b3 where required, but it also states that TNoodle's full scramble filtering is not yet implemented. The official WCA scramble program remains TNoodle-WCA. These are suitable random-state practice scrambles, but must not be described as official TNoodle output or used for official competition scrambling. See https://js.cubing.net/cubing/scramble/ and https://www.worldcubeassociation.org/regulations/scrambles/ .
 
 ## Publish and install on iPad
 
 1. Create a GitHub repository named `bld-memo-trainer`.
 2. Upload the contents of this folder to the repository root: `index.html`, `styles.css`, `app.js`, `manifest.webmanifest`, `sw.js`, `icon-192.png`, `icon-512.png`, and `README.md`.
 3. In repository **Settings → Pages**, choose **Deploy from a branch**, branch `main`, folder `/(root)`, then Save.
-4. Open the published HTTPS address in Safari on the iPad while online once. Wait for the page to load fully so the service worker can cache the app shell.
+4. Open the published HTTPS address in Safari on the iPad while online.
 5. Safari Share → **Add to Home Screen** → Add.
-6. Import your TNoodle text set once. Thereafter, the cached app and imported scrambles work offline.
+6. Keep an internet connection when generating new scrambles.
 
 ## Updating an existing installation
 
-Replace the files in the same GitHub repository and commit. The service worker cache version is incremented to `v2`; reopen the hosted page once while online so the new files are cached. The imported scramble pool remains in local storage unless you clear website data or use **Clear imported set**.
+Replace the files in the same GitHub repository and commit. Reopen the hosted page in Safari while online. The service worker uses network-first updates for same-origin app files; the external cubing.js scramble module is loaded online from its CDN.
 
 ## Features
 
@@ -40,5 +32,5 @@ Replace the files in the same GitHub repository and commit. The service worker c
 - Setup-efficiency ranking, orientation correction choices and parity display.
 - Matching 2D net calculated from the exact displayed scramble.
 - Reference regression checks using the two supplied J Perm examples.
-- Offline app shell and locally stored imported TNoodle practice scramble set.
-- Stopwatch and solve history are reserved for a later update.
+- Online random-state scramble generation; internet required.
+- Stopwatch and solve history reserved for a later update.
