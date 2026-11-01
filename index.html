@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f0f2fb" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="BLD Memo" />
+  <title>BLD Memo Trainer</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="stage">
+    <header class="session-card">
+      <div class="session-top">
+        <div class="app-icon" aria-hidden="true"><span></span><span></span></div>
+        <div class="session-name">BLD Memo Trainer</div>
+        <div class="event-select">3×3 <span class="chevrons">⌃⌄</span></div>
+      </div>
+      <div class="session-stats">
+        <div class="mini-stat"><strong>12</strong><span>EDGES</span></div>
+        <div class="mini-stat"><strong>8</strong><span>CORNERS</span></div>
+        <div class="mini-stat"><strong>A–X</strong><span>LETTERING</span></div>
+      </div>
+      <div class="session-grabber"></div>
+    </header>
+
+    <div class="menu-wrap">
+      <button id="menuToggle" class="menu-button" aria-label="Open menu" aria-expanded="false">•••</button>
+      <div id="menuPanel" class="menu-panel hidden">
+        <button id="newScrambleBtn" class="menu-action">↻ <span>New scramble</span></button>
+        <button id="copyScrambleBtn" class="menu-action" disabled>▢ <span>Copy scramble</span></button>
+        <div class="menu-note">Fresh random-state 3×3 scramble</div>
+      </div>
+    </div>
+
+    <section class="scramble-zone" aria-label="Current scramble">
+      <div class="scramble-label">CURRENT SCRAMBLE</div>
+      <div id="scrambleText" class="scramble-text" aria-live="polite">Generating scramble…</div>
+      <div id="scrambleStatus" class="scramble-status" aria-live="polite">Connecting to scramble generator…</div>
+    </section>
+
+    <section class="main-action-zone">
+      <div class="mode-caption">OLD POCHMANN <span class="caption-dot">•</span> GREEN FRONT · WHITE TOP</div>
+      <button id="revealBtn" class="reveal-button" disabled>
+        <span class="reveal-overline">READY TO CHECK?</span>
+        <strong>REVEAL MEMO</strong>
+        <span class="reveal-arrow">↗</span>
+      </button>
+      <div class="under-action">Memorise the cube first. Reveal only when you're ready.</div>
+    </section>
+
+    <aside class="net-card" aria-label="Scrambled cube preview">
+      <div class="net-card-heading">CUBE STATE <span>2D NET</span></div>
+      <svg id="cubeNet" class="cube-net" viewBox="0 0 492 364" role="img" aria-label="Unfolded net of the scrambled cube">
+        <text x="246" y="180" text-anchor="middle" fill="#8a91a4">Cube net loading…</text>
+      </svg>
+    </aside>
+
+    <aside class="status-card">
+      <div class="status-card-title">TRAINING CHECKS</div>
+      <div class="status-metric"><span>Reference examples</span><strong id="integrityBadge" class="integrity-badge pending"><i class="status-dot"></i><span>Checking…</span></strong></div>
+      <div class="status-divider"></div>
+      <div class="status-metric"><span>Memo status</span><strong id="memoStatus">HIDDEN</strong></div>
+      <div class="status-metric"><span>Orientation</span><strong>GF / WT</strong></div>
+    </aside>
+  </main>
+
+  <section id="memoPanel" class="memo-panel hidden" aria-live="polite">
+    <div class="memo-topline">
+      <div>
+        <div class="section-kicker">GENERATED MEMO</div>
+        <h2>Targets & cycle choices</h2>
+      </div>
+      <div class="memo-tools">
+        <button id="copyMemoBtn" class="button button-quiet button-small">Copy memo</button>
+        <button id="hideMemoBtn" class="button button-quiet button-small">Hide</button>
+      </div>
+    </div>
+
+    <div class="paired-summary">
+      <div class="summary-heading"><span>CONTINUOUS PAIRED MEMO</span><span id="letterCount" class="summary-count"></span></div>
+      <div class="paired-block"><div class="paired-label">EDGES</div><div id="edgePaired" class="paired-letters">—</div></div>
+      <div class="paired-block"><div class="paired-label">CORNERS</div><div id="cornerPaired" class="paired-letters">—</div></div>
+      <div class="parity-row"><span>PARITY</span><strong id="parityValue" class="parity-value">—</strong></div>
+    </div>
+
+    <div class="cycle-section">
+      <div class="cycle-heading"><h3>Edges</h3><span id="edgeCheck" class="check-pill">Checking…</span></div>
+      <p class="muted small">Cycle starts are ranked by estimated Old Pochmann setup efficiency. Select an alternative to update the memo.</p>
+      <div id="edgeCycles" class="cycle-list"></div>
+      <div id="edgeOrientation" class="orientation-box"></div>
+    </div>
+
+    <div class="cycle-section">
+      <div class="cycle-heading"><h3>Corners</h3><span id="cornerCheck" class="check-pill">Checking…</span></div>
+      <p class="muted small">Corner targets use your supplied lettering scheme and the J Perm buffer convention.</p>
+      <div id="cornerCycles" class="cycle-list"></div>
+      <div id="cornerOrientation" class="orientation-box"></div>
+    </div>
+
+    <div id="verificationBox" class="verification-box"></div>
+    <div class="memo-footer-note">Green front · White top · Old Pochmann · A–X lettering scheme</div>
+  </section>
+
+  <script type="module" src="app.js"></script>
+  <script>
+    const menuToggle = document.getElementById('menuToggle');
+    const menuPanel = document.getElementById('menuPanel');
+    menuToggle.addEventListener('click', () => {
+      const open = menuPanel.classList.toggle('hidden') === false;
+      menuToggle.setAttribute('aria-expanded', String(open));
+    });
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('.menu-wrap')) {
+        menuPanel.classList.add('hidden');
+        menuToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.getElementById('newScrambleBtn').addEventListener('click', () => {
+      menuPanel.classList.add('hidden');
+      menuToggle.setAttribute('aria-expanded', 'false');
+    });
+    const reveal = document.getElementById('revealBtn');
+    reveal.addEventListener('click', () => {
+      document.getElementById('memoStatus').textContent = 'REVEALED';
+    });
+    document.getElementById('hideMemoBtn').addEventListener('click', () => {
+      document.getElementById('memoStatus').textContent = 'HIDDEN';
+    });
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    }
+  </script>
+</body>
+</html>
